@@ -300,7 +300,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ---
 
-## Team
+## Team(loopify)
 
 Built for **Guidewire DEVTrails 2026** — Phase 1 Ideation & Foundation.
 
