@@ -1,0 +1,13 @@
+{
+  "worker_profile": {
+    "city": "Bengaluru",
+    "zone": "Koramangala",
+    "shift_type": "evening_rush",
+    "coverage_tier": "standard",
+    "weekly_earnings": 6000,
+    "weekly_active_hours": 40
+  },
+  "feature_context": {
+    "reference_date": "2026-04-03"
+  }
+}

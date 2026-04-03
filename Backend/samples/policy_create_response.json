@@ -1,0 +1,50 @@
+{
+  "policy_id": "pol_20260403120100_cd34",
+  "worker_id": "wrk_20260403120000_ab12",
+  "city": "Bengaluru",
+  "zone": "Koramangala",
+  "shift_type": "evening_rush",
+  "coverage_tier": "standard",
+  "weekly_earnings": 6000.0,
+  "weekly_active_hours": 40.0,
+  "model_version": "weekly-disruption-risk-v1",
+  "risk_summary": {
+    "risk_score": 0,
+    "risk_band": "LOW",
+    "expected_disrupted_hours": 0.02,
+    "premium_loading": 3,
+    "top_risk_drivers": [
+      "evening rush exposure",
+      "flood-prone zone",
+      "access friction during rain"
+    ],
+    "zone_risk_band": "MEDIUM",
+    "zone_baseline_risk_score": 0.4645
+  },
+  "premium_breakdown": {
+    "base_premium": 29,
+    "zone_risk_loading": 8,
+    "shift_exposure_loading": 5,
+    "coverage_factor": 7,
+    "ml_risk_loading": 3,
+    "safe_zone_discount": 0,
+    "final_weekly_premium": 52
+  },
+  "coverage_summary": {
+    "coverage_tier": "standard",
+    "coverage_percent": 70,
+    "max_weekly_payout": 3500,
+    "insured_shift_hours_per_week": 28,
+    "protected_hours_basis": 28.0,
+    "protected_weekly_income": 4200.0,
+    "protected_hourly_income": 150.0
+  },
+  "weekly_premium": 52,
+  "max_weekly_payout": 3500,
+  "coverage_percent": 70,
+  "valid_from": "2026-04-01T00:00:00",
+  "valid_to": "2026-04-08T00:00:00",
+  "status": "active",
+  "created_at": "2026-04-03T12:01:00",
+  "updated_at": "2026-04-03T12:01:00"
+}

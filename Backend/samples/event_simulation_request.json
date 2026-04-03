@@ -1,0 +1,13 @@
+{
+  "event_type": "heavy_rainfall",
+  "city": "Bengaluru",
+  "zone": "Koramangala",
+  "severity": "high",
+  "start_time": "2026-04-03T18:00:00",
+  "duration_hours": 3,
+  "source": "simulation",
+  "verified": true,
+  "metadata": {
+    "trigger": "demo"
+  }
+}

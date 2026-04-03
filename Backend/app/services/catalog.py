@@ -5,10 +5,22 @@ from typing import Any
 from app.config import (
     COVERAGE_TIER_CONFIG,
     SAFE_ZONE_DISCOUNT_AMOUNT,
+    SEVERITY_MULTIPLIER_BY_LEVEL,
     SHIFT_LOADING_BY_TYPE,
+    SUPPORTED_EVENT_TYPES,
     ZONE_LOADING_BY_RISK_BAND,
 )
 from src.config.metadata import CITY_ALIASES, CITY_METADATA, SHIFT_ALIASES, SHIFT_DEFINITIONS, ZONE_METADATA
+
+SUPPORTED_PLATFORMS = {
+    "blinkit": "Blinkit",
+    "zepto": "Zepto",
+    "instamart": "Instamart",
+    "swiggy instamart": "Instamart",
+    "bigbasket now": "BigBasket Now",
+    "bb now": "BigBasket Now",
+    "bigbasket": "BigBasket Now",
+}
 
 
 def normalize_key(value: str) -> str:
@@ -18,10 +30,7 @@ def normalize_key(value: str) -> str:
 CITY_NAME_MAP = {normalize_key(city): city for city in CITY_METADATA}
 CITY_NAME_MAP.update({normalize_key(alias): city for alias, city in CITY_ALIASES.items()})
 
-SHIFT_NAME_MAP = {
-    normalize_key(shift_type): shift_type
-    for shift_type in SHIFT_DEFINITIONS
-}
+SHIFT_NAME_MAP = {normalize_key(shift_type): shift_type for shift_type in SHIFT_DEFINITIONS}
 SHIFT_NAME_MAP.update({normalize_key(alias): shift_type for alias, shift_type in SHIFT_ALIASES.items()})
 
 ZONE_ALIAS_MAP = {normalize_key(zone): zone for zone in ZONE_METADATA}
@@ -75,6 +84,28 @@ def normalize_zone(zone: str) -> str:
     return canonical
 
 
+def normalize_platform(platform: str) -> str:
+    canonical = SUPPORTED_PLATFORMS.get(normalize_key(platform))
+    if canonical is None:
+        allowed = ", ".join(sorted(set(SUPPORTED_PLATFORMS.values())))
+        raise ValueError(f"Unsupported platform '{platform}'. Supported platforms: {allowed}.")
+    return canonical
+
+
+def normalize_event_type(event_type: str) -> str:
+    canonical = normalize_key(event_type).replace(" ", "_")
+    if canonical not in SUPPORTED_EVENT_TYPES:
+        raise ValueError(f"Unsupported event_type '{event_type}'.")
+    return canonical
+
+
+def normalize_severity(severity: str) -> str:
+    canonical = normalize_key(severity)
+    if canonical not in SEVERITY_MULTIPLIER_BY_LEVEL:
+        raise ValueError(f"Unsupported severity '{severity}'.")
+    return canonical
+
+
 def get_zone_profile(zone: str) -> dict[str, Any]:
     canonical_zone = normalize_zone(zone)
     metadata = ZONE_METADATA[canonical_zone]
@@ -117,3 +148,15 @@ def get_coverage_profile(coverage_tier: str) -> dict[str, Any]:
         "coverage_tier": canonical_tier,
         **COVERAGE_TIER_CONFIG[canonical_tier],
     }
+
+
+def validate_city_zone(city: str, zone: str) -> tuple[str, dict[str, Any]]:
+    canonical_city = normalize_city(city)
+    zone_profile = get_zone_profile(zone)
+    if canonical_city != zone_profile["city"]:
+        raise ValueError(f"Zone '{zone_profile['zone']}' does not belong to city '{canonical_city}'.")
+    return canonical_city, zone_profile
+
+
+def severity_multiplier(severity: str) -> float:
+    return float(SEVERITY_MULTIPLIER_BY_LEVEL[normalize_severity(severity)])

@@ -1,0 +1,14 @@
+{
+  "worker_id": "wrk_20260403120000_ab12",
+  "name": "Ravi Kumar",
+  "phone": "9876543210",
+  "city": "Bengaluru",
+  "platform": "Blinkit",
+  "zone": "Koramangala",
+  "shift_type": "evening_rush",
+  "weekly_earnings": 6000.0,
+  "weekly_active_hours": 40.0,
+  "upi_id": "ravi@oksbi",
+  "created_at": "2026-04-03T12:00:00",
+  "updated_at": "2026-04-03T12:00:00"
+}

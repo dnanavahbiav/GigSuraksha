@@ -4,6 +4,7 @@ import csv
 import json
 import math
 import pickle
+import ssl
 import statistics
 from collections import defaultdict
 from datetime import date, datetime, timedelta
@@ -124,7 +125,15 @@ def to_repo_relative_path(path: Path) -> str:
 
 def fetch_json(url: str, params: dict[str, Any]) -> dict[str, Any]:
     request_url = f"{url}?{urlencode(params)}"
-    with urlopen(request_url, timeout=60) as response:
+    ssl_context = None
+    try:
+        import certifi  # type: ignore
+
+        ssl_context = ssl.create_default_context(cafile=certifi.where())
+    except Exception:
+        ssl_context = None
+
+    with urlopen(request_url, timeout=60, context=ssl_context) as response:
         return json.loads(response.read().decode("utf-8"))
 
 

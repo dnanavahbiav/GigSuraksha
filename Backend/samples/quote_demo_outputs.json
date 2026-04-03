@@ -1,0 +1,128 @@
+[
+  {
+    "model_version": "weekly-disruption-risk-v1",
+    "worker_profile": {
+      "city": "Bengaluru",
+      "zone": "Koramangala",
+      "shift_type": "evening_rush",
+      "coverage_tier": "standard",
+      "weekly_earnings": 6000.0,
+      "weekly_active_hours": 40.0
+    },
+    "risk_summary": {
+      "risk_score": 0,
+      "risk_band": "LOW",
+      "expected_disrupted_hours": 0.02,
+      "premium_loading": 3,
+      "top_risk_drivers": [
+        "evening rush exposure",
+        "flood-prone zone",
+        "access friction during rain"
+      ],
+      "zone_risk_band": "MEDIUM",
+      "zone_baseline_risk_score": 0.4645
+    },
+    "premium_breakdown": {
+      "base_premium": 29,
+      "zone_risk_loading": 8,
+      "shift_exposure_loading": 5,
+      "coverage_factor": 7,
+      "ml_risk_loading": 3,
+      "safe_zone_discount": 0,
+      "final_weekly_premium": 52
+    },
+    "coverage_summary": {
+      "coverage_tier": "standard",
+      "coverage_percent": 70,
+      "max_weekly_payout": 3500,
+      "insured_shift_hours_per_week": 28,
+      "protected_hours_basis": 28.0,
+      "protected_weekly_income": 4200.0,
+      "protected_hourly_income": 150.0
+    }
+  },
+  {
+    "model_version": "weekly-disruption-risk-v1",
+    "worker_profile": {
+      "city": "Mumbai",
+      "zone": "Andheri East",
+      "shift_type": "evening_rush",
+      "coverage_tier": "standard",
+      "weekly_earnings": 7200.0,
+      "weekly_active_hours": 42.0
+    },
+    "risk_summary": {
+      "risk_score": 21,
+      "risk_band": "LOW",
+      "expected_disrupted_hours": 1.71,
+      "premium_loading": 3,
+      "top_risk_drivers": [
+        "access friction during rain",
+        "evening rush exposure",
+        "flood-prone zone"
+      ],
+      "zone_risk_band": "HIGH",
+      "zone_baseline_risk_score": 0.6775
+    },
+    "premium_breakdown": {
+      "base_premium": 29,
+      "zone_risk_loading": 14,
+      "shift_exposure_loading": 5,
+      "coverage_factor": 7,
+      "ml_risk_loading": 3,
+      "safe_zone_discount": 0,
+      "final_weekly_premium": 58
+    },
+    "coverage_summary": {
+      "coverage_tier": "standard",
+      "coverage_percent": 70,
+      "max_weekly_payout": 3500,
+      "insured_shift_hours_per_week": 28,
+      "protected_hours_basis": 28.0,
+      "protected_weekly_income": 5040.0,
+      "protected_hourly_income": 180.0
+    }
+  },
+  {
+    "model_version": "weekly-disruption-risk-v1",
+    "worker_profile": {
+      "city": "Gurugram",
+      "zone": "Gurgaon Sec 49",
+      "shift_type": "late_night",
+      "coverage_tier": "comprehensive",
+      "weekly_earnings": 9000.0,
+      "weekly_active_hours": 32.0
+    },
+    "risk_summary": {
+      "risk_score": 100,
+      "risk_band": "HIGH",
+      "expected_disrupted_hours": 20.0,
+      "premium_loading": 12,
+      "top_risk_drivers": [
+        "severe pollution pressure",
+        "recent disruption persistence",
+        "late night exposure"
+      ],
+      "zone_risk_band": "HIGH",
+      "zone_baseline_risk_score": 0.672
+    },
+    "premium_breakdown": {
+      "base_premium": 29,
+      "zone_risk_loading": 14,
+      "shift_exposure_loading": 4,
+      "coverage_factor": 10,
+      "ml_risk_loading": 12,
+      "safe_zone_discount": 0,
+      "final_weekly_premium": 69
+    },
+    "coverage_summary": {
+      "coverage_tier": "comprehensive",
+      "coverage_percent": 90,
+      "max_weekly_payout": 5000,
+      "insured_shift_hours_per_week": 21,
+      "protected_hours_basis": 21.0,
+      "protected_weekly_income": 8100.0,
+      "protected_hourly_income": 385.71
+    }
+  }
+]

@@ -1,0 +1,11 @@
+{
+  "name": "Ravi Kumar",
+  "phone": "9876543210",
+  "city": "Bengaluru",
+  "platform": "Blinkit",
+  "zone": "Koramangala",
+  "shift_type": "evening_rush",
+  "weekly_earnings": 6000,
+  "weekly_active_hours": 40,
+  "upi_id": "ravi@oksbi"
+}
