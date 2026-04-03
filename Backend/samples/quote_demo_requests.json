@@ -1,0 +1,41 @@
+[
+  {
+    "worker_profile": {
+      "city": "Bengaluru",
+      "zone": "Koramangala",
+      "shift_type": "evening_rush",
+      "coverage_tier": "standard",
+      "weekly_earnings": 6000,
+      "weekly_active_hours": 40
+    },
+    "feature_context": {
+      "reference_date": "2026-04-03"
+    }
+  },
+  {
+    "worker_profile": {
+      "city": "Mumbai",
+      "zone": "Andheri East",
+      "shift_type": "evening_rush",
+      "coverage_tier": "standard",
+      "weekly_earnings": 7200,
+      "weekly_active_hours": 42
+    },
+    "feature_context": {
+      "reference_date": "2025-07-15"
+    }
+  },
+  {
+    "worker_profile": {
+      "city": "Gurugram",
+      "zone": "Sector 49",
+      "shift_type": "late_night",
+      "coverage_tier": "comprehensive",
+      "weekly_earnings": 9000,
+      "weekly_active_hours": 32
+    },
+    "feature_context": {
+      "reference_date": "2026-01-20"
+    }
+  }
+]

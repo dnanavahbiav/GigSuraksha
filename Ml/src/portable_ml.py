@@ -39,6 +39,7 @@ from src.utils.paths import (
     PROCESSED_CITY_HOURLY_PATH,
     PROCESSED_WEEKLY_DATASET_PATH,
     RAW_OPEN_METEO_DIR,
+    ROOT_DIR,
     VALIDATION_PREDICTIONS_PATH,
     ZONE_METADATA_EXPORT_PATH,
     ensure_directories,
@@ -97,6 +98,30 @@ def iso_date(value: date) -> str:
     return value.isoformat()
 
 
+def zone_baseline_risk_score(zone_metadata: dict[str, Any]) -> float:
+    return round(
+        zone_metadata["flood_prone_score"] * 0.45
+        + zone_metadata["aqi_sensitivity_score"] * 0.30
+        + zone_metadata["zone_access_risk_score"] * 0.25,
+        4,
+    )
+
+
+def zone_risk_band_from_score(score: float) -> str:
+    if score >= 0.60:
+        return "HIGH"
+    if score >= 0.40:
+        return "MEDIUM"
+    return "LOW"
+
+
+def to_repo_relative_path(path: Path) -> str:
+    try:
+        return str(path.resolve().relative_to(ROOT_DIR.parent.resolve()))
+    except ValueError:
+        return str(path)
+
+
 def fetch_json(url: str, params: dict[str, Any]) -> dict[str, Any]:
     request_url = f"{url}?{urlencode(params)}"
     with urlopen(request_url, timeout=60) as response:
@@ -122,6 +147,8 @@ def read_csv_rows(path: Path) -> list[dict[str, str]]:
 def export_zone_metadata() -> list[dict[str, Any]]:
     rows = []
     for zone, metadata in sorted(ZONE_METADATA.items(), key=lambda item: (item[1]["city"], item[0])):
+        baseline_score = zone_baseline_risk_score(metadata)
+        risk_band = zone_risk_band_from_score(baseline_score)
         rows.append(
             {
                 "zone": zone,
@@ -129,6 +156,9 @@ def export_zone_metadata() -> list[dict[str, Any]]:
                 "zone_flood_prone_score": metadata["flood_prone_score"],
                 "zone_aqi_sensitivity_score": metadata["aqi_sensitivity_score"],
                 "zone_access_risk_score": metadata["zone_access_risk_score"],
+                "zone_baseline_risk_score": baseline_score,
+                "zone_risk_band": risk_band,
+                "zone_risk_loading": {"LOW": 3, "MEDIUM": 8, "HIGH": 14}[risk_band],
                 "safe_zone_discount_hint": metadata["safe_zone_discount_hint"],
             }
         )
@@ -835,8 +865,8 @@ def evaluate_saved_model(
 
     metrics_payload = json.loads(metrics_path.read_text(encoding="utf-8"))
     metrics_payload["evaluation_artifacts"] = {
-        "validation_predictions": str(predictions_path),
-        "actual_vs_predicted_plot": str(plot_path),
+        "validation_predictions": to_repo_relative_path(predictions_path),
+        "actual_vs_predicted_plot": to_repo_relative_path(plot_path),
     }
     write_json(metrics_path, metrics_payload)
     return metrics_payload
@@ -929,9 +959,18 @@ def normalize_city(city: str) -> str:
 
 def normalize_zone(zone: str) -> str:
     normalized = zone.strip()
-    if normalized not in ZONE_METADATA:
+    alias_map = {
+        "Sector 49": "Gurgaon Sec 49",
+        "Sec 49": "Gurgaon Sec 49",
+        "Gurgaon Sector 49": "Gurgaon Sec 49",
+        "Gurugram Sector 49": "Gurgaon Sec 49",
+        "Gurgaon Sec 49": "Gurgaon Sec 49",
+        "Gurugram Sec 49": "Gurgaon Sec 49",
+    }
+    canonical = alias_map.get(normalized, normalized)
+    if canonical not in ZONE_METADATA:
         raise ValueError(f"Unsupported zone '{zone}'.")
-    return normalized
+    return canonical
 
 
 def normalize_shift_type(shift_type: str) -> str:
@@ -983,6 +1022,7 @@ def predict_weekly_risk(
     premium_loading = premium_loading_for_band(risk_band)
 
     return {
+        "model_version": artifact["summary"]["model_version"],
         "city": normalized_city,
         "zone": normalized_zone,
         "shift_type": normalized_shift,
@@ -1017,6 +1057,7 @@ def write_backend_handoff() -> None:
 
 ```json
 {
+  "model_version": "weekly-disruption-risk-v1",
   "risk_score": 67,
   "risk_band": "HIGH",
   "expected_disrupted_hours": 5.4,

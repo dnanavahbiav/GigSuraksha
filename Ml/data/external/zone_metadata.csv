@@ -1,18 +1,18 @@
-zone,city,zone_flood_prone_score,zone_aqi_sensitivity_score,zone_access_risk_score,safe_zone_discount_hint
-HSR Layout,Bengaluru,0.48,0.33,0.41,2
-Indiranagar,Bengaluru,0.28,0.3,0.3,4
-Koramangala,Bengaluru,0.55,0.34,0.46,1
-Whitefield,Bengaluru,0.52,0.37,0.53,1
-Adyar,Chennai,0.77,0.28,0.57,0
-Anna Nagar,Chennai,0.58,0.26,0.43,2
-Dwarka,Delhi,0.38,0.7,0.42,2
-Rohini,Delhi,0.31,0.72,0.37,2
-Cyber City,Gurugram,0.44,0.58,0.49,1
-Gurgaon Sec 49,Gurugram,0.72,0.61,0.66,0
-Banjara Hills,Hyderabad,0.33,0.31,0.35,3
-Gachibowli,Hyderabad,0.41,0.3,0.39,3
-Salt Lake,Kolkata,0.68,0.47,0.49,1
-Andheri East,Mumbai,0.82,0.42,0.73,0
-Bandra West,Mumbai,0.5,0.36,0.43,2
-Powai,Mumbai,0.64,0.38,0.51,1
-Koregaon Park,Pune,0.45,0.29,0.36,3
+zone,city,zone_flood_prone_score,zone_aqi_sensitivity_score,zone_access_risk_score,zone_baseline_risk_score,zone_risk_band,zone_risk_loading,safe_zone_discount_hint
+HSR Layout,Bengaluru,0.48,0.33,0.41,0.4175,MEDIUM,8,2
+Indiranagar,Bengaluru,0.28,0.3,0.3,0.291,LOW,3,4
+Koramangala,Bengaluru,0.55,0.34,0.46,0.4645,MEDIUM,8,1
+Whitefield,Bengaluru,0.52,0.37,0.53,0.4775,MEDIUM,8,1
+Adyar,Chennai,0.77,0.28,0.57,0.573,MEDIUM,8,0
+Anna Nagar,Chennai,0.58,0.26,0.43,0.4465,MEDIUM,8,2
+Dwarka,Delhi,0.38,0.7,0.42,0.486,MEDIUM,8,2
+Rohini,Delhi,0.31,0.72,0.37,0.448,MEDIUM,8,2
+Cyber City,Gurugram,0.44,0.58,0.49,0.4945,MEDIUM,8,1
+Gurgaon Sec 49,Gurugram,0.72,0.61,0.66,0.672,HIGH,14,0
+Banjara Hills,Hyderabad,0.33,0.31,0.35,0.329,LOW,3,3
+Gachibowli,Hyderabad,0.41,0.3,0.39,0.372,LOW,3,3
+Salt Lake,Kolkata,0.68,0.47,0.49,0.5695,MEDIUM,8,1
+Andheri East,Mumbai,0.82,0.42,0.73,0.6775,HIGH,14,0
+Bandra West,Mumbai,0.5,0.36,0.43,0.4405,MEDIUM,8,2
+Powai,Mumbai,0.64,0.38,0.51,0.5295,MEDIUM,8,1
+Koregaon Park,Pune,0.45,0.29,0.36,0.3795,LOW,3,3

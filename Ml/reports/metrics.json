@@ -217,7 +217,7 @@
   ],
   "training_runtime_note": "Portable stdlib fallback used because compiled scientific Python packages were blocked by local macOS code-signing policy in this environment.",
   "evaluation_artifacts": {
-    "validation_predictions": "/Users/loopassembly/Desktop/GigSuraksha/Ml/reports/validation_predictions.csv",
-    "actual_vs_predicted_plot": "/Users/loopassembly/Desktop/GigSuraksha/Ml/reports/actual_vs_predicted.svg"
+    "validation_predictions": "Ml/reports/validation_predictions.csv",
+    "actual_vs_predicted_plot": "Ml/reports/actual_vs_predicted.svg"
   }
 }

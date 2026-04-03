@@ -18,6 +18,7 @@
 
 ```json
 {
+  "model_version": "weekly-disruption-risk-v1",
   "risk_score": 67,
   "risk_band": "HIGH",
   "expected_disrupted_hours": 5.4,
