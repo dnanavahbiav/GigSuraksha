@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Shield, Menu, X } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { Shield, Menu, X, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
+import { clearAll } from '@/lib/store';
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -15,7 +16,14 @@ const navLinks = [
 
 export default function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+
+  function handleReset() {
+    clearAll();
+    router.push('/');
+    setOpen(false);
+  }
 
   return (
     <header className="bg-surface border-b border-border sticky top-0 z-50">
@@ -40,6 +48,14 @@ export default function Header() {
               {link.label}
             </Link>
           ))}
+          <button
+            onClick={handleReset}
+            title="Reset demo — clears all local state"
+            className="ml-2 flex items-center gap-1.5 px-2.5 py-1.5 text-[12px] font-medium text-text-muted hover:text-text-secondary transition-colors rounded-md hover:bg-border-light"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            Reset Demo
+          </button>
         </nav>
 
         {/* Mobile Toggle */}
@@ -69,6 +85,13 @@ export default function Header() {
               {link.label}
             </Link>
           ))}
+          <button
+            onClick={handleReset}
+            className="flex items-center gap-1.5 w-full px-3 py-2.5 text-[13px] font-medium text-text-muted hover:bg-border-light rounded-md"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            Reset Demo
+          </button>
         </nav>
       )}
     </header>

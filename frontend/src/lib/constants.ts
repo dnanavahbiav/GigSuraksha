@@ -186,3 +186,24 @@ export const SHIFT_RISK_LOADINGS: Record<string, number> = {
   evening: 5,
   night: 7,
 };
+
+// ─── Backend Mapping Constants ───────────────────────────────
+
+/** Map frontend shift IDs → backend canonical shift_type values */
+export const SHIFT_TYPE_MAP: Record<string, string> = {
+  morning: 'morning_rush',
+  afternoon: 'afternoon',
+  evening: 'evening_rush',
+  night: 'late_night',
+};
+
+/** Map frontend DisruptionType → backend event_type. null = unsupported by backend */
+export const EVENT_TYPE_MAP: Record<string, string | null> = {
+  RAIN_EVENT: 'heavy_rainfall',
+  WATERLOGGING_EVENT: 'waterlogging',
+  HEAT_STRESS_EVENT: null,
+  AIR_QUALITY_EVENT: 'severe_aqi',
+  PLATFORM_OUTAGE: 'platform_outage',
+  DARK_STORE_UNAVAILABLE: 'dark_store_unavailable',
+  ZONE_ACCESS_RESTRICTION: 'zone_access_restriction',
+};

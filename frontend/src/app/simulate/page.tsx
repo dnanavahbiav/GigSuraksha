@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import Header from '@/components/Header';
 import Card, { CardHeader } from '@/components/Card';
 import Badge from '@/components/Badge';
 import Button from '@/components/Button';
-import { ZONES, DISRUPTION_TYPE_INFO, SEVERITY_CONFIG, SHIFT_WINDOWS } from '@/lib/constants';
-import { calculatePayout, calculateShiftOverlap, formatCurrency } from '@/lib/calculations';
+import { ZONES, DISRUPTION_TYPE_INFO, SEVERITY_CONFIG, SHIFT_WINDOWS, EVENT_TYPE_MAP } from '@/lib/constants';
+import { calculateShiftOverlap } from '@/lib/calculations';
+import { simulateEvent } from '@/lib/api';
+import { getWorker, saveEvent } from '@/lib/store';
 import type { DisruptionType, Severity } from '@/lib/types';
 import {
   CloudRain,
@@ -20,16 +22,12 @@ import {
   CheckCircle,
   Zap,
   Clock,
+  Loader2,
+  Info,
 } from 'lucide-react';
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  CloudRain,
-  Waves,
-  Thermometer,
-  Wind,
-  ShieldOff,
-  Store,
-  WifiOff,
+  CloudRain, Waves, Thermometer, Wind, ShieldOff, Store, WifiOff,
 };
 
 const DISRUPTION_TYPES = Object.keys(DISRUPTION_TYPE_INFO) as DisruptionType[];
@@ -42,7 +40,10 @@ export default function SimulatePage() {
   const [eventStartHour, setEventStartHour] = useState(18);
   const [zoneId, setZoneId] = useState('blr-kora');
   const [selectedShifts, setSelectedShifts] = useState(['morning', 'evening']);
-  const [triggered, setTriggered] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<Record<string, unknown> | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [claims, setClaims] = useState<Record<string, unknown>[]>([]);
 
   const zone = ZONES.find((z) => z.id === zoneId);
   const info = DISRUPTION_TYPE_INFO[type];
@@ -51,16 +52,56 @@ export default function SimulatePage() {
 
   const shifts = SHIFT_WINDOWS.filter((sw) => selectedShifts.includes(sw.id));
   const shiftOverlap = calculateShiftOverlap(eventStartHour, duration, shifts);
-  const protectedHourlyIncome = 150;
-  const weeklyCap = 3500;
-  const payout = calculatePayout(protectedHourlyIncome, shiftOverlap, severity, weeklyCap);
 
-  function handleTrigger() {
-    setTriggered(true);
+  const backendEventType = EVENT_TYPE_MAP[type];
+  const isUnsupported = backendEventType === null;
+
+  async function handleTrigger() {
+    if (isUnsupported) return;
+    setLoading(true);
+    setError(null);
+    setResult(null);
+    setClaims([]);
+
+    try {
+      const worker = getWorker();
+      const city = zone?.city || worker?.city || 'Bengaluru';
+
+      // Build ISO start_time for today at eventStartHour
+      const now = new Date();
+      now.setHours(eventStartHour, 0, 0, 0);
+      const startTime = now.toISOString().replace('.000Z', '').replace('Z', '');
+
+      const payload = {
+        event_type: backendEventType!,
+        city,
+        zone: zone?.name || 'Koramangala',
+        severity,
+        start_time: startTime,
+        duration_hours: duration,
+        source: 'frontend_demo',
+        verified: true,
+        metadata: { trigger: 'frontend_demo' },
+      };
+
+      const res = await simulateEvent(payload);
+      saveEvent(res);
+      setResult(res);
+
+      // Extract auto-created claims from response
+      const autoClaims = (res.claims || res.auto_claims || res.created_claims || []) as Record<string, unknown>[];
+      setClaims(autoClaims);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Simulation failed');
+    } finally {
+      setLoading(false);
+    }
   }
 
   function handleReset() {
-    setTriggered(false);
+    setResult(null);
+    setError(null);
+    setClaims([]);
     setType('RAIN_EVENT');
     setSeverity('high');
     setDuration(3);
@@ -93,25 +134,40 @@ export default function SimulatePage() {
                   {DISRUPTION_TYPES.map((dt) => {
                     const dtInfo = DISRUPTION_TYPE_INFO[dt];
                     const DtIcon = iconMap[dtInfo.icon] || CloudRain;
+                    const unsupported = EVENT_TYPE_MAP[dt] === null;
                     return (
                       <button
                         key={dt}
-                        onClick={() => { setType(dt); setTriggered(false); }}
+                        onClick={() => { setType(dt); setResult(null); }}
                         className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg border text-left text-[13px] transition-colors cursor-pointer ${
                           type === dt
                             ? 'border-primary bg-primary-light'
                             : 'border-border bg-surface hover:border-primary/40'
-                        }`}
+                        } ${unsupported ? 'opacity-60' : ''}`}
                       >
                         <DtIcon className={`w-4 h-4 flex-shrink-0 ${type === dt ? 'text-primary' : 'text-text-muted'}`} />
-                        <span className={`font-medium ${type === dt ? 'text-primary' : 'text-text-secondary'}`}>
-                          {dtInfo.label}
-                        </span>
+                        <div className="flex-1 min-w-0">
+                          <span className={`font-medium block ${type === dt ? 'text-primary' : 'text-text-secondary'}`}>
+                            {dtInfo.label}
+                          </span>
+                          {unsupported && (
+                            <span className="text-[10px] text-text-muted">Live API not yet available</span>
+                          )}
+                        </div>
                       </button>
                     );
                   })}
                 </div>
               </div>
+
+              {isUnsupported && (
+                <div className="mb-5 px-3 py-2.5 rounded-lg bg-warning-light border border-warning/20 flex items-start gap-2">
+                  <Info className="w-4 h-4 text-warning flex-shrink-0 mt-0.5" />
+                  <p className="text-[12px] text-warning">
+                    <strong>Heat Stress</strong> events are not yet supported in the live simulation API. Select a different event type to run a live simulation.
+                  </p>
+                </div>
+              )}
 
               {/* Severity */}
               <div className="mb-5">
@@ -120,7 +176,7 @@ export default function SimulatePage() {
                   {SEVERITIES.map((s) => (
                     <button
                       key={s}
-                      onClick={() => { setSeverity(s); setTriggered(false); }}
+                      onClick={() => { setSeverity(s); setResult(null); }}
                       className={`px-3 py-2 rounded-lg border text-[13px] font-medium text-center transition-colors cursor-pointer ${
                         severity === s
                           ? 'border-primary bg-primary-light text-primary'
@@ -143,7 +199,7 @@ export default function SimulatePage() {
                     max={8}
                     step={0.5}
                     value={duration}
-                    onChange={(e) => { setDuration(Number(e.target.value)); setTriggered(false); }}
+                    onChange={(e) => { setDuration(Number(e.target.value)); setResult(null); }}
                     className="w-full accent-primary"
                   />
                   <p className="text-[13px] text-text-secondary mt-1">{duration} hours</p>
@@ -152,7 +208,7 @@ export default function SimulatePage() {
                   <label className="block text-[13px] font-medium text-text-primary mb-1.5">Event Start Hour</label>
                   <select
                     value={eventStartHour}
-                    onChange={(e) => { setEventStartHour(Number(e.target.value)); setTriggered(false); }}
+                    onChange={(e) => { setEventStartHour(Number(e.target.value)); setResult(null); }}
                     className="w-full px-3 py-2 border border-border rounded-lg text-[13px] text-text-primary bg-surface outline-none focus:border-primary"
                   >
                     {Array.from({ length: 24 }, (_, i) => (
@@ -169,7 +225,7 @@ export default function SimulatePage() {
                 <label className="block text-[13px] font-medium text-text-primary mb-1.5">Zone</label>
                 <select
                   value={zoneId}
-                  onChange={(e) => { setZoneId(e.target.value); setTriggered(false); }}
+                  onChange={(e) => { setZoneId(e.target.value); setResult(null); }}
                   className="w-full px-3 py-2 border border-border rounded-lg text-[13px] text-text-primary bg-surface outline-none focus:border-primary"
                 >
                   {ZONES.map((z) => (
@@ -193,7 +249,7 @@ export default function SimulatePage() {
                           setSelectedShifts((prev) =>
                             prev.includes(sw.id) ? prev.filter((s) => s !== sw.id) : [...prev, sw.id]
                           );
-                          setTriggered(false);
+                          setResult(null);
                         }}
                         className="w-4 h-4 accent-primary rounded"
                       />
@@ -203,9 +259,18 @@ export default function SimulatePage() {
                 </div>
               </div>
 
-              <Button onClick={handleTrigger} fullWidth>
-                <Zap className="w-4 h-4" />
-                Trigger Simulation
+              <Button onClick={handleTrigger} fullWidth disabled={loading || isUnsupported}>
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Simulating…
+                  </>
+                ) : (
+                  <>
+                    <Zap className="w-4 h-4" />
+                    {isUnsupported ? 'Event Type Not Supported' : 'Trigger Simulation'}
+                  </>
+                )}
               </Button>
             </Card>
           </div>
@@ -231,81 +296,98 @@ export default function SimulatePage() {
                   <span className="font-medium text-text-primary">{duration} hours</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-text-secondary">Severity Multiplier</span>
-                  <span className="font-medium text-text-primary">{sevConfig.multiplier}x</span>
-                </div>
-                <div className="flex justify-between">
                   <span className="text-text-secondary">Shift Overlap</span>
                   <span className="font-medium text-text-primary">{shiftOverlap} hours</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-text-secondary">Data Source</span>
-                  <span className="font-medium text-text-primary text-right max-w-[60%]">{info.description.split('.')[0]}</span>
+                  <span className="text-text-secondary">Backend Event Type</span>
+                  <span className="font-medium text-text-primary">{backendEventType || 'N/A'}</span>
                 </div>
               </div>
             </Card>
 
-            {/* Payout Result */}
-            {triggered && (
-              <Card padding="md" className={shiftOverlap > 0 ? 'ring-1 ring-success' : 'ring-1 ring-danger'}>
-                <div className="flex items-center gap-2 mb-4">
-                  {shiftOverlap > 0 ? (
-                    <CheckCircle className="w-5 h-5 text-success" />
-                  ) : (
-                    <AlertTriangle className="w-5 h-5 text-danger" />
+            {/* Error */}
+            {error && (
+              <Card padding="md" className="ring-1 ring-danger">
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertTriangle className="w-5 h-5 text-danger" />
+                  <p className="text-[14px] font-semibold text-danger">Simulation Failed</p>
+                </div>
+                <p className="text-[13px] text-text-secondary">{error}</p>
+              </Card>
+            )}
+
+            {/* Result */}
+            {result && (
+              <Card padding="md" className="ring-1 ring-success">
+                <div className="flex items-center gap-2 mb-3">
+                  <CheckCircle className="w-5 h-5 text-success" />
+                  <p className="text-[15px] font-semibold text-text-primary">Event Simulated</p>
+                </div>
+                <div className="space-y-2 text-[13px] mb-4">
+                  <div className="flex justify-between">
+                    <span className="text-text-secondary">Event ID</span>
+                    <span className="font-medium text-text-primary text-right max-w-[60%] truncate">
+                      {(result.event_id || result.id || '—') as string}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-text-secondary">Status</span>
+                    <span className="font-medium text-text-primary">{(result.status || 'created') as string}</span>
+                  </div>
+                  {(result.affected_policies_count !== undefined) && (
+                    <div className="flex justify-between">
+                      <span className="text-text-secondary">Affected Policies</span>
+                      <span className="font-medium text-text-primary">{result.affected_policies_count as number}</span>
+                    </div>
                   )}
-                  <p className="text-[15px] font-semibold text-text-primary">
-                    {shiftOverlap > 0 ? 'Claim Eligible' : 'Not Eligible'}
-                  </p>
                 </div>
 
-                {shiftOverlap > 0 ? (
-                  <>
-                    <div className="bg-background border border-border rounded-lg p-3 mb-4 font-mono text-[12px] text-text-secondary">
-                      <p className="text-text-muted text-[10px] mb-1">// Payout calculation</p>
-                      <p>min(₹{protectedHourlyIncome} × {shiftOverlap}h × {sevConfig.multiplier}, ₹{weeklyCap})</p>
-                      <p className="text-primary font-semibold mt-1">= {formatCurrency(payout)}</p>
+                {/* Auto-created claims */}
+                {claims.length > 0 && (
+                  <div className="border-t border-border pt-3">
+                    <p className="text-[12px] font-semibold text-text-primary mb-2">
+                      Auto-created Claims ({claims.length})
+                    </p>
+                    <div className="space-y-2">
+                      {claims.map((claim, i) => (
+                        <div key={i} className="p-2.5 rounded-lg bg-background border border-border text-[12px]">
+                          <div className="flex justify-between">
+                            <span className="text-text-muted">Claim ID</span>
+                            <span className="font-medium text-text-primary truncate max-w-[60%]">
+                              {(claim.claim_id || claim.id || `CLM-${i}`) as string}
+                            </span>
+                          </div>
+                          {claim.estimated_payout !== undefined && (
+                            <div className="flex justify-between mt-1">
+                              <span className="text-text-muted">Est. Payout</span>
+                              <span className="font-semibold text-success">
+                                ₹{Number(claim.estimated_payout).toLocaleString('en-IN')}
+                              </span>
+                            </div>
+                          )}
+                          {claim.status && (
+                            <div className="flex justify-between mt-1">
+                              <span className="text-text-muted">Status</span>
+                              <span>{claim.status as string}</span>
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
-                    <div className="space-y-2 text-[13px]">
-                      <div className="flex justify-between">
-                        <span className="text-text-secondary">Protected Hourly Income</span>
-                        <span className="font-medium">{formatCurrency(protectedHourlyIncome)}/hr</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-text-secondary">Affected Hours</span>
-                        <span className="font-medium">{shiftOverlap}h</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-text-secondary">Severity Multiplier</span>
-                        <span className="font-medium">{sevConfig.multiplier}x</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-text-secondary">Weekly Cap Remaining</span>
-                        <span className="font-medium">{formatCurrency(weeklyCap)}</span>
-                      </div>
-                      <div className="border-t border-border pt-2 flex justify-between">
-                        <span className="font-semibold text-text-primary">Estimated Payout</span>
-                        <span className="text-[18px] font-bold text-success">{formatCurrency(payout)}</span>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <p className="text-[13px] text-text-secondary">
-                    The disruption event does not overlap with any insured shift window.
-                    Adjust the event start time or shift selection and try again.
-                  </p>
+                  </div>
                 )}
               </Card>
             )}
 
-            {!triggered && (
+            {!result && !error && !loading && (
               <div className="text-center py-10 text-text-muted">
                 <Clock className="w-8 h-8 mx-auto mb-2 opacity-50" />
                 <p className="text-[13px]">Configure the event and click &quot;Trigger Simulation&quot; to see results</p>
               </div>
             )}
 
-            {triggered && (
+            {(result || error) && (
               <Button variant="outline" fullWidth onClick={handleReset}>
                 Reset Simulation
               </Button>

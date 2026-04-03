@@ -342,7 +342,7 @@ export default function LandingPage() {
           <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-[13px] text-text-muted">
             <div className="flex items-center gap-2">
               <Shield className="w-4 h-4" />
-              <span>GigSuraksha — Phase 1 Prototype</span>
+              <span>GigSuraksha — Phase 2</span>
             </div>
             <div>Guidewire DEVTrails 2026 Submission</div>
           </div>

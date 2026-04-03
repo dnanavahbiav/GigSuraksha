@@ -1,14 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Card from '@/components/Card';
 import Button from '@/components/Button';
 import Badge from '@/components/Badge';
-import { CITIES, PLATFORMS, SHIFT_WINDOWS, ZONES } from '@/lib/constants';
+import { CITIES, PLATFORMS, SHIFT_WINDOWS, ZONES, SHIFT_TYPE_MAP } from '@/lib/constants';
 import type { OnboardingData, City } from '@/lib/types';
-import { User, Briefcase, MapPin, IndianRupee, CheckCircle, ArrowLeft, ArrowRight } from 'lucide-react';
+import { registerWorker } from '@/lib/api';
+import { saveWorker } from '@/lib/store';
+import { User, Briefcase, MapPin, IndianRupee, CheckCircle, ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
 
 const STEPS = [
   { id: 0, label: 'Personal', icon: User },
@@ -35,6 +37,8 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(0);
   const [data, setData] = useState<OnboardingData>(initial);
   const [otpSent, setOtpSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const cityZones = ZONES.filter((z) => z.city === data.city);
   const selectedZone = ZONES.find((z) => z.id === data.zoneId);
@@ -64,6 +68,51 @@ export default function OnboardingPage() {
         return data.weeklyEarnings > 0 && data.weeklyActiveHours > 0 && data.upiId.length > 0;
       default:
         return true;
+    }
+  }
+
+  async function handleSubmit() {
+    setLoading(true);
+    setError(null);
+    try {
+      // Map first selected shift to backend canonical value
+      const primaryShift = data.shifts[0] || 'morning';
+      const shiftType = SHIFT_TYPE_MAP[primaryShift] || 'morning_rush';
+
+      const payload = {
+        name: data.name,
+        phone: data.mobile,
+        city: data.city,
+        platform: data.platform,
+        zone: selectedZone?.name || data.zoneId,
+        shift_type: shiftType,
+        weekly_earnings: data.weeklyEarnings,
+        weekly_active_hours: data.weeklyActiveHours,
+        upi_id: data.upiId,
+      };
+
+      const result = await registerWorker(payload);
+
+      // Save worker with worker_id to localStorage
+      saveWorker({
+        worker_id: (result.worker_id as string) || '',
+        name: data.name,
+        phone: data.mobile,
+        city: data.city,
+        platform: data.platform,
+        zone: selectedZone?.name || data.zoneId,
+        shift_type: shiftType,
+        weekly_earnings: data.weeklyEarnings,
+        weekly_active_hours: data.weeklyActiveHours,
+        upi_id: data.upiId,
+        ...result,
+      });
+
+      router.push('/quote');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -317,13 +366,18 @@ export default function OnboardingPage() {
                 <ReviewRow label="Weekly Hours" value={`${data.weeklyActiveHours} hrs`} />
                 <ReviewRow label="UPI ID" value={data.upiId} />
               </div>
+              {error && (
+                <div className="px-3 py-2.5 rounded-lg bg-danger-light border border-danger/20">
+                  <p className="text-[13px] text-danger">{error}</p>
+                </div>
+              )}
             </div>
           )}
 
           {/* Navigation */}
           <div className="flex items-center justify-between mt-8 pt-5 border-t border-border">
             {step > 0 ? (
-              <Button variant="ghost" onClick={() => setStep(step - 1)}>
+              <Button variant="ghost" onClick={() => setStep(step - 1)} disabled={loading}>
                 <ArrowLeft className="w-4 h-4" />
                 Back
               </Button>
@@ -336,9 +390,18 @@ export default function OnboardingPage() {
                 <ArrowRight className="w-4 h-4" />
               </Button>
             ) : (
-              <Button onClick={() => router.push('/quote')}>
-                View My Quote
-                <ArrowRight className="w-4 h-4" />
+              <Button onClick={handleSubmit} disabled={loading}>
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Registering...
+                  </>
+                ) : (
+                  <>
+                    View My Quote
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
               </Button>
             )}
           </div>
